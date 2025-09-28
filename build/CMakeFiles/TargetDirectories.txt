@@ -1,3 +1,0 @@
-/home/ruben/Desktop/c_projects/hash_table/build/CMakeFiles/project.dir
-/home/ruben/Desktop/c_projects/hash_table/build/CMakeFiles/edit_cache.dir
-/home/ruben/Desktop/c_projects/hash_table/build/CMakeFiles/rebuild_cache.dir

@@ -1,1 +1,0 @@
-/sbin/cc  -Wall -Wextra -g -lraylib  -Wl,--dependency-file=CMakeFiles/project.dir/link.d CMakeFiles/project.dir/src/main.c.o -o project
