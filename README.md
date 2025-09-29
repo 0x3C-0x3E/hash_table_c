@@ -1,5 +1,6 @@
 # Hash table implementation in C
 
+A (undoubtedly flawed) implementation of a simple hash table in C.
+
 > [!WARNING]
-> > [!CAUTION]
 > work in progress
