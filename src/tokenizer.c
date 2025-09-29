@@ -16,8 +16,7 @@ const char stop_chars[] = {
 
 size_t stop_chars_count = sizeof(stop_chars) / sizeof(stop_chars[0]);
 
-int tokenizer_init(Tokenizer *tk)
-{
+int tokenizer_init(Tokenizer *tk) {
     *tk = (Tokenizer) {
         .file_ptr = NULL,
 
@@ -41,8 +40,7 @@ int tokenizer_init(Tokenizer *tk)
     return 0;
 }
 
-int tokenizer_read_file(const char *file_name, Tokenizer *tk)
-{
+int tokenizer_read_file(const char *file_name, Tokenizer *tk) {
     tk->file_ptr = fopen(file_name, "r");
     if (tk->file_ptr == NULL) {
         printf("[ERR] Could not read file [%s]\n", file_name);
@@ -52,8 +50,7 @@ int tokenizer_read_file(const char *file_name, Tokenizer *tk)
     return 0; 
 }
 
-static void tokenizer_create_new_token(Tokenizer *tk)
-{
+static void tokenizer_create_new_token(Tokenizer *tk) {
     size_t chars_count = tk->next_char_ptr - tk->pool_count;
 
     if (chars_count == 0)
@@ -62,20 +59,17 @@ static void tokenizer_create_new_token(Tokenizer *tk)
     if (tk->tokens_count >= tk->tokens_capacity) {
         tk->tokens_capacity *= 2;
         tk->tokens = realloc(tk->tokens, sizeof(Token) * tk->tokens_capacity);
+        if (tk->tokens == NULL) {
+            printf("[ERR] Realloc failed!\n");
+            return;
+        }
     }
 
     tk->tokens[tk->tokens_count] = (Token) {
-        .string_ptr = &tk->string_pool[tk->pool_count],
+        .string_offset = tk->pool_count,
         .string_size = chars_count,
     };
     
-    printf("[NEW TOKEN] \n");
-    printf("    Size: %zu\n", tk->tokens[tk->tokens_count].string_size);
-    printf("    Token: ");
-    for (size_t i = 0; i < tk->tokens[tk->tokens_count].string_size; ++i) {
-        putchar(tk->tokens[tk->tokens_count].string_ptr[i]);
-    }
-    printf("\n");
 
     tk->tokens_count ++;
 
@@ -83,7 +77,7 @@ static void tokenizer_create_new_token(Tokenizer *tk)
 }
 
 void tokenizer_parse_file(Tokenizer *tk) {
-    char c;
+    int c;
 
     while ((c = fgetc(tk->file_ptr)) != EOF) {
         bool end_of_token = false;
@@ -100,12 +94,33 @@ void tokenizer_parse_file(Tokenizer *tk) {
         if (tk->next_char_ptr >= tk->pool_capacity) {
             tk->pool_capacity *= 2;
             tk->string_pool = realloc(tk->string_pool, sizeof(uint8_t) * tk->pool_capacity);
+            if (tk->string_pool == NULL) {
+                printf("[ERR] Realloc failed!\n");
+                return;
+            }
         }
         tk->string_pool[tk->next_char_ptr] = c;
         tk->next_char_ptr ++;
     }
 
+    tokenizer_create_new_token(tk);
+
     fclose(tk->file_ptr);
+}
+
+void tokenizer_dump(Tokenizer *tk) {
+    for (size_t i = 0; i < tk->tokens_count; ++i) {
+
+        printf("[TOKEN] \n");
+        printf("    Size: %zu\n", tk->tokens[i].string_size);
+        printf("    Token: ");
+        uint8_t *ptr = &tk->string_pool[tk->tokens[i].string_offset];
+
+        for (size_t j = 0; j < tk->tokens[i].string_size; ++j) {
+            putchar(ptr[j]);
+        }
+        printf("\n");
+    }
 }
 
 void tokenizer_cleanup(Tokenizer *tk) {

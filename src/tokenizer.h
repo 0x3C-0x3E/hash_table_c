@@ -11,7 +11,7 @@ extern const char stop_chars[];
 extern size_t stop_chars_count;
 
 typedef struct Token {
-    const uint8_t *string_ptr;
+    size_t string_offset;
     size_t string_size;
 } Token;
 
@@ -35,5 +35,7 @@ int tokenizer_init(Tokenizer *tk);
 int tokenizer_read_file(const char *file_name, Tokenizer *tk);
 
 void tokenizer_parse_file(Tokenizer *tk);
+
+void tokenizer_dump(Tokenizer *tk);
 
 void tokenizer_cleanup(Tokenizer *tk);
