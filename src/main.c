@@ -1,6 +1,13 @@
-#include <stdio.h>
+#include "tokenizer.h"
+
+Tokenizer tk;
 
 int main(void) {
-    printf("Hello, World!\n");
+    tokenizer_init(&tk);
+
+    tokenizer_read_file("res/file_very_smol.txt", &tk);
+    tokenizer_parse_file(&tk);
+
+    tokenizer_cleanup(&tk);
     return 0;
 }

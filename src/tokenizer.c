@@ -68,6 +68,15 @@ static void tokenizer_create_new_token(Tokenizer *tk)
         .string_ptr = &tk->string_pool[tk->pool_count],
         .string_size = chars_count,
     };
+    
+    printf("[NEW TOKEN] \n");
+    printf("    Size: %zu\n", tk->tokens[tk->tokens_count].string_size);
+    printf("    Token: ");
+    for (size_t i = 0; i < tk->tokens[tk->tokens_count].string_size; ++i) {
+        putchar(tk->tokens[tk->tokens_count].string_ptr[i]);
+    }
+    printf("\n");
+
     tk->tokens_count ++;
 
     tk->pool_count += chars_count;
@@ -95,6 +104,8 @@ void tokenizer_parse_file(Tokenizer *tk) {
         tk->string_pool[tk->next_char_ptr] = c;
         tk->next_char_ptr ++;
     }
+
+    fclose(tk->file_ptr);
 }
 
 void tokenizer_cleanup(Tokenizer *tk) {
