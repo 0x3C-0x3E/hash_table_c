@@ -69,16 +69,33 @@ static int resize_table(HashTable *ht) {
     return 0;
 }
 
+static bool buffer_compare(uint8_t *buff1, size_t buff1_size, uint8_t *buff2, size_t buff2_size) {
+    if (buff1_size != buff2_size) {
+        return false;
+    }
+    for (size_t i = 0; i < buff1_size; ++i) {
+        if (buff1[i] != buff2[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 int hash_table_insert(HashTable *ht, const KV *kv) {
     if ((ht->count + 1) > ht->capacity * 0.75) {
         if (resize_table(ht) == 1) {
-            return 1;
+            return -1;
         }
     }
 
     uint32_t index = str_hash(kv->key, kv->key_size) % ht->capacity;
     
     while (ht->table[index].occupied) {
+        if (buffer_compare(kv->key, kv->key_size, ht->table[index].key, ht->table[index].key_size)) {
+            ht->table[index].value += 1;
+            return 2;
+            break;
+        }
         index = (index + 1) % ht->capacity;
     }
     

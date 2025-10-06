@@ -13,7 +13,7 @@ int main(void) {
 
     // tokenizer_dump(&tk);
     
-    for (size_t i = 0; i < 10; ++i) {
+    for (size_t i = 0; i < tk.tokens_count; ++i) {
 
         KV kv = {
             .key = (uint8_t*) (tk.string_pool + tk.tokens[i].string_offset),
@@ -22,10 +22,12 @@ int main(void) {
             .value = 1,
         };
 
-        hash_table_insert(&ht, &kv);
+        if (hash_table_insert(&ht, &kv)) {
+            // already in table, added +1 to value
+        }
     }
 
-    hash_table_dump(&ht);
+    // hash_table_dump(&ht);
 
     hash_table_cleanup(&ht);
     tokenizer_cleanup(&tk);

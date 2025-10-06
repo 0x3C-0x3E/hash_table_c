@@ -34,10 +34,6 @@ int hash_table_is_occupied(const HashTable *ht, size_t index);
 
 int hash_table_insert(HashTable *ht, const KV *kv);
 
-// touch meaning creates the entry if it does not exist
-// and if it does, inc value by 1
-int hash_table_touch(HashTable *ht, size_t index);
-
 void hash_table_dump(HashTable *ht);
 
 void hash_table_cleanup(HashTable* ht);
