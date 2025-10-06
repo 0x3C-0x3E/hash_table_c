@@ -13,16 +13,21 @@ int main(void) {
 
     // tokenizer_dump(&tk);
     
-    char c[] = "Hi";
-    KV kv = {
-        .key = (uint8_t*)&c,
-        .key_size = 2,
-        .occupied = true,
-        .value = 1,
-    };
+    for (size_t i = 0; i < 10; ++i) {
 
-    hash_table_insert(&ht, 0, &kv);
+        KV kv = {
+            .key = (uint8_t*) (tk.string_pool + tk.tokens[i].string_offset),
+            .key_size = tk.tokens[i].string_size,
+            .occupied = true,
+            .value = 1,
+        };
 
+        hash_table_insert(&ht, &kv);
+    }
+
+    hash_table_dump(&ht);
+
+    hash_table_cleanup(&ht);
     tokenizer_cleanup(&tk);
     return 0;
 }
