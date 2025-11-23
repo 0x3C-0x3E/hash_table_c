@@ -2,85 +2,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
-
-
-// int hash_table_insert(HashTable *ht, const KV *kv) {
-//     if ((ht->count + 1) > ht->capacity * 0.75) {
-//         if (resize_table(ht) == 1) {
-//             return 1;
-//         }
-//     }
-//
-//     uint32_t index = str_hash(kv->key, kv->key_size) % ht->capacity;
-//
-//     while (ht->table[index].occupied) {
-//         if (buffer_compare(kv->key, kv->key_size, ht->table[index].key, ht->table[index].key_size)) {
-//             break;
-//         }
-//         index = (index + 1) % ht->capacity;
-//     }
-//
-//     memcpy(&ht->table[index], kv, sizeof(KV));
-//
-//     ht->count ++;
-//
-//     return 0;
-// }
-//
-// int hash_table_update(HashTable *ht, const KV *kv);
-//
-// int hash_table_append(HashTable *ht, const KV *kv);
-//
-// int hash_table_get(HashTable *ht, const uint8_t *key, uint8_t key_size, KV *output_kv) {
-//     uint32_t index = str_hash(key, key_size) % ht->capacity;
-//     if (!ht->table[index].occupied) {
-//         return 1;
-//     }
-//
-//     *output_kv = ht->table[index];
-//
-//     return 0;
-// }
-//
-// size_t hash_table_get_kv_index(HashTable *ht, KV *kv) {
-//     size_t index;
-//     for (index = 0; index < ht->capacity; ++index) {
-//         if (memcmp(&ht->table[index], kv, sizeof(KV)) == 0) {
-//             return index;
-//         }
-//     }
-//     return index;
-// }
-//
-// int hash_table_set(HashTable *ht, const KV *kv);
-//
-// void hash_table_dump(HashTable *ht) {
-//     for (size_t i = 0; i < ht->capacity; ++i) {
-//         KV *kv = &ht->table[i];
-//         if (!kv->occupied) {
-//             continue;
-//         }
-//
-//         printf("index %zu: {key: '", i);
-//         for (size_t j = 0; j < kv->key_size; ++j) {
-//             printf("%c", kv->key[j]);
-//         }
-//         printf("', value: '%d'}", kv->value);
-//
-//         printf("\n");
-//     }
-// }
-//
-// void hash_table_dump_kv(HashTable *ht, KV* kv) {
-//     printf("index %zu: {key: '", hash_table_get_kv_index(ht, kv));
-//     for (size_t j = 0; j < kv->key_size; ++j) {
-//         printf("%c", kv->key[j]);
-//     }
-//     printf("', value: '%d'}", kv->value);
-//
-//     printf("\n");
-// }
-//
+#include <sys/types.h>
 
 ht_return hash_table_init(HashTable* ht) {
     *ht = (HashTable) {
@@ -111,21 +33,29 @@ static bool key_compare(const Key* k1, const Key* k2) {
     return false;
 }
 
-static ht_return get_index_from_key(HashTable* ht, const KV* kv, size_t* found_index) {
-    uint32_t index = str_hash(kv->key.key, kv->key.key_size) % ht->capacity;
+static ht_return get_index_from_key(HashTable* ht, const Key* key, uint32_t* found_index) {
+    uint32_t index = str_hash(key->key, key->key_size) % ht->capacity;
+    uint32_t starting_index = index;
 
-    if (ht->table[index].occupied && !key_compare(&kv->key, &ht->table[index].key)) {
+    if (!ht->table[index].occupied) {
+        *found_index = index;
+        return HT_NOT_IN_TABLE;
+    }
+    
+    while (ht->table[index].occupied) {
+        if (key_compare(key, &ht->table[index].key)) {
+            *found_index = index;
+            return HT_SUCESS;
+        }
 
-        while (ht->table[index].occupied) {
-            if (key_compare(&kv->key, &ht->table[index].key)) {
-                break;
-            }
-            index = (index + 1) % ht->capacity;
+        index = (index + 1) % ht->capacity;
+        if (index == starting_index) {
+            *found_index = index;
+            return HT_NOT_IN_TABLE;
         }
     }
 
     *found_index = index;
-
     return HT_SUCESS;
 }
 
@@ -163,11 +93,7 @@ static ht_return resize_table(HashTable *ht) {
     return HT_SUCESS;
 }
 
-
-
-
-
-ht_return hash_table_insert(HashTable* ht, const KV* kv) {
+ht_return hash_table_insert(HashTable* ht, const Key* key, const Value* value) {
     if ((ht->count + 1) > ht->capacity * 0.75) {
         int ret;
         if ((ret = resize_table(ht)) != HT_SUCESS) {
@@ -175,69 +101,98 @@ ht_return hash_table_insert(HashTable* ht, const KV* kv) {
         }
     }
 
-    uint32_t index = str_hash(kv->key.key, kv->key.key_size) % ht->capacity;
-
-    if (ht->table[index].occupied && !key_compare(&kv->key, &ht->table[index].key)) {
-        ht->table[index].colliding = true;
-
-        while (ht->table[index].occupied) {
-            if (key_compare(&kv->key, &ht->table[index].key)) {
-                break;
-            }
-            index = (index + 1) % ht->capacity;
-        }
-    }
+    KV new_kv = (KV) {
+        .key = *key,
+        .value = *value,
+        .occupied = true,
+    };
     
-    memcpy(&ht->table[index], kv, sizeof(KV));
-
+    uint32_t index;
+    int ret = get_index_from_key(ht, key, &index);
+    if (ret == HT_SUCESS) {
+        memcpy(&ht->table[index], &new_kv, sizeof(KV));
+        return HT_SUCESS;
+    }
+       
+    memcpy(&ht->table[index], &new_kv, sizeof(KV));
     ht->count ++;
 
     return HT_SUCESS;
 }
 
-ht_return hash_table_update(HashTable* ht, const KV* kv) {
-    uint32_t index = str_hash(kv->key.key, kv->key.key_size) % ht->capacity;
+ht_return hash_table_update(HashTable* ht, const Key* key, const Value* value) {
+    KV new_kv = (KV) {
+        .key = *key,
+        .value = *value,
+        .occupied = true,
+    };
+    
+    uint32_t index;
+    int ret = get_index_from_key(ht, key, &index);
+    if (ret == HT_SUCESS) {
+        memcpy(&ht->table[index], &new_kv, sizeof(KV));
+        return HT_SUCESS;
+    }
 
-    if (ht->table[index].occupied && !key_compare(&kv->key, &ht->table[index].key)) {
-        while (ht->table[index].occupied) {
-            if (key_compare(&kv->key, &ht->table[index].key)) {
-                break;
-            }
-            index = (index + 1) % ht->capacity;
+    return HT_NOT_IN_TABLE;
+}
+
+ht_return hash_table_append(HashTable* ht, const Key* key, const Value* value) {
+    if ((ht->count + 1) > ht->capacity * 0.75) {
+        int ret;
+        if ((ret = resize_table(ht)) != HT_SUCESS) {
+            return ret;
         }
     }
-    memcpy(&ht->table[index], kv, sizeof(KV));
-    return HT_SUCESS;
 
+    KV new_kv = (KV) {
+        .key = *key,
+        .value = *value,
+        .occupied = true,
+    };
     
-    while (ht->table[index].occupied) {
-        if (key_compare(&kv->key, &ht->table[index].key)) {
-            break;
-        }
-        index = (index + 1) % ht->capacity;
+    uint32_t index;
+    int ret = get_index_from_key(ht, key, &index);
+    if (ret == HT_SUCESS) {
+        return HT_IN_TABLE;
     }
-    
-    memcpy(&ht->table[index], kv, sizeof(KV));
-
+       
+    memcpy(&ht->table[index], &new_kv, sizeof(KV));
     ht->count ++;
 
     return HT_SUCESS;
-}
-
-ht_return hash_table_append(HashTable* ht, const KV* kv) {
-
 }
 
 ht_return hash_table_get(HashTable* ht, const Key* key, KV* kv) {
-
+    uint32_t index;
+    int ret = get_index_from_key(ht, key, &index);
+    if (ret == HT_SUCESS) {
+        memcpy(kv, &ht->table[index], sizeof(KV));
+        return HT_SUCESS;
+    }
+    return HT_NOT_IN_TABLE;
 }
 
 void hash_table_dump_kv(HashTable *ht, KV* kv) {
-
+    uint32_t index;
+    get_index_from_key(ht, &kv->key, &index);
+    printf("index %u: {key: '", index);
+    for (size_t j = 0; j < kv->key.key_size; ++j) {
+        printf("%c", kv->key.key[j]);
+    }
+    printf("', value: '%d'}", kv->value);
+    printf("\n");
 }
 
 void hash_table_dump(HashTable *ht) {
+    for (size_t i = 0; i < ht->capacity; ++i) {
+        KV *kv = &ht->table[i];
+        if (!kv->occupied) {
+            continue;
+        }
 
+        hash_table_dump_kv(ht, kv);
+    }
 }
 
 void hash_table_cleanup(HashTable* ht) {

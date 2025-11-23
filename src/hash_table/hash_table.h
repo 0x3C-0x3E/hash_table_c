@@ -6,7 +6,6 @@
 
 #include "hash.h"
 
-#define HT_MAX_CAP 255 * 255
 #define HT_INIT_CAP 255
 
 typedef struct Key {
@@ -33,16 +32,17 @@ typedef enum {
     HT_SUCESS = 0,
     HT_ERROR = 1,
     HT_NOT_IN_TABLE = 2,
-    HT_TABLE_OVERFLOW = 3,
+    HT_IN_TABLE = 3,
+    HT_TABLE_OVERFLOW = 4,
 } ht_return;
 
 ht_return hash_table_init(HashTable* ht);
 
-ht_return hash_table_insert(HashTable* ht, const KV* kv);
+ht_return hash_table_insert(HashTable* ht, const Key* key, const Value* value);
 
-ht_return hash_table_update(HashTable* ht, const KV* kv);
+ht_return hash_table_update(HashTable* ht, const Key* key, const Value* value);
 
-ht_return hash_table_append(HashTable* ht, const KV* kv);
+ht_return hash_table_append(HashTable* ht, const Key* key, const Value* value);
 
 ht_return hash_table_get(HashTable* ht, const Key* key, KV* kv);
 
