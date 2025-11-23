@@ -22,12 +22,12 @@ int main(void) {
             .value = 1,
         };
 
-        if (hash_table_insert(&ht, &kv)) {
-            // already in table, added +1 to value
+        if (hash_table_insert(&ht, &kv) == KV_IN_TABLE) {
+
         }
     }
 
-    // hash_table_dump(&ht);
+    hash_table_dump(&ht);
 
     hash_table_cleanup(&ht);
     tokenizer_cleanup(&tk);
