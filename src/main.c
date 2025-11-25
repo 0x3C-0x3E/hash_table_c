@@ -1,5 +1,5 @@
-#include "tokenizer.h"
-#include "hash_table.h"
+#include "tokenizer/tokenizer.h"
+#include "hash_table/hash_table.h"
 
 Tokenizer tk;
 HashTable ht;
@@ -14,17 +14,22 @@ int main(void) {
     // tokenizer_dump(&tk);
     
     for (size_t i = 0; i < tk.tokens_count; ++i) {
-
-        KV kv = {
+        Key key = (Key) {
             .key = (uint8_t*) (tk.string_pool + tk.tokens[i].string_offset),
             .key_size = tk.tokens[i].string_size,
-            .occupied = true,
-            .value = 1,
         };
-
-        if (hash_table_insert(&ht, &kv) == KV_IN_TABLE) {
-
+        Value curr_value = 1;
+        int ret;
+        if (hash_table_get(&ht, &key, &curr_value) == HT_NOT_IN_TABLE) {
+            ht_return ret = hash_table_insert(&ht, &key, &curr_value);
+            if (ret == HT_TABLE_OVERFLOW) {
+                return 1;
+            }
+            continue;
         }
+
+        curr_value += 1;
+        hash_table_update(&ht, &key, &curr_value);
     }
 
     hash_table_dump(&ht);

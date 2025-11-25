@@ -44,7 +44,7 @@ ht_return hash_table_update(HashTable* ht, const Key* key, const Value* value);
 
 ht_return hash_table_append(HashTable* ht, const Key* key, const Value* value);
 
-ht_return hash_table_get(HashTable* ht, const Key* key, KV* kv);
+ht_return hash_table_get(HashTable* ht, const Key* key, Value* value);
 
 void hash_table_dump_kv(HashTable *ht, KV* kv);
 
